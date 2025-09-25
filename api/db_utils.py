@@ -1,0 +1,118 @@
+import pymysql
+from pymysql.cursors import DictCursor
+
+DB_CONFIG = {
+    "host": "localhost",
+    "user": "your_username",
+    "password": "your_password",
+    "database": "rag_app",
+    "cursorclass": DictCursor
+}
+
+def get_db_connection():
+    return pymysql.connect(**DB_CONFIG)
+
+# ---------------------------
+# Application Logs
+# ---------------------------
+def create_application_logs():
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS application_logs (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    session_id VARCHAR(255) NOT NULL,
+                    user_query TEXT,
+                    gpt_response TEXT,
+                    model VARCHAR(100),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+        conn.commit()
+    finally:
+        conn.close()
+
+def insert_application_logs(session_id, user_query, gpt_response, model):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO application_logs (session_id, user_query, gpt_response, model)
+                VALUES (%s, %s, %s, %s)
+            """, (session_id, user_query, gpt_response, model))
+        conn.commit()
+    finally:
+        conn.close()
+
+def get_chat_history(session_id):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT user_query, gpt_response, model, created_at
+                FROM application_logs
+                WHERE session_id = %s
+                ORDER BY created_at ASC
+            """, (session_id,))
+            messages = cursor.fetchall()
+        return messages
+    finally:
+        conn.close()
+
+# ---------------------------
+# Document Store
+# ---------------------------
+def create_document_store():
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS documents (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    filename VARCHAR(255) NOT NULL,
+                    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+        conn.commit()
+    finally:
+        conn.close()
+
+def insert_document_record(filename):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO documents (filename)
+                VALUES (%s)
+            """, (filename,))
+            conn.commit()
+            return cursor.lastrowid  # return file_id
+    finally:
+        conn.close()
+
+def delete_document_record(file_id):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("DELETE FROM documents WHERE id = %s", (file_id,))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+def get_all_documents():
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM documents ORDER BY uploaded_at DESC")
+            documents = cursor.fetchall()
+        return documents
+    finally:
+        conn.close()
+
+# ---------------------------
+# Initialize tables
+# ---------------------------
+create_application_logs()
+create_document_store()
