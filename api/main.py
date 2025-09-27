@@ -20,10 +20,6 @@ app = FastAPI()
 @app.get("/config")
 def get_config():
     return {
-#         os.environ[""] = "true"
-# os.environ["LANGCHAIN_API_KEY"] = "test"
-# os.environ["GOOGLE_API_KEY"] = "test"
-# os.environ["LANGCHAIN_PROJECT"] = "Production RAG App"
         "LANGCHAIN_API_KEY": os.getenv("LANGCHAIN_API_KEY"),
         "GOOGLE_API_KEY": os.getenv("GOOGLE_API_KEY"),
         "langchain_tracing": os.getenv("LANGCHAIN_TRACING_V2"),

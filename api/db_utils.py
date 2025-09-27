@@ -2,6 +2,7 @@ import os
 import pymysql
 from pymysql.cursors import DictCursor
 from dotenv import load_dotenv
+from langchain_core.messages import HumanMessage, AIMessage
 
 # Load environment variables from .env file
 load_dotenv()
@@ -50,18 +51,27 @@ def insert_application_logs(session_id, user_query, response, model):
     finally:
         conn.close()
 
+
 def get_chat_history(session_id):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
             cursor.execute("""
-                SELECT user_query, response, model, created_at
+                SELECT user_query, response
                 FROM application_logs
                 WHERE session_id = %s
                 ORDER BY created_at ASC
             """, (session_id,))
-            messages = cursor.fetchall()
-        return messages
+            rows = cursor.fetchall()
+        
+        # Convert the database rows into a list of message objects
+        chat_history_messages = []
+        if rows:
+            for row in rows:
+                chat_history_messages.append(HumanMessage(content=row['user_query']))
+                chat_history_messages.append(AIMessage(content=row['response']))
+        
+        return chat_history_messages
     finally:
         conn.close()
 
@@ -110,7 +120,13 @@ def get_all_documents():
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM documents ORDER BY uploaded_at DESC")
+            # Use 'AS' to rename the column in the query result
+            sql_query = """
+                SELECT id, filename, uploaded_at AS upload_timestamp
+                FROM documents 
+                ORDER BY uploaded_at DESC
+            """
+            cursor.execute(sql_query)
             documents = cursor.fetchall()
         return documents
     finally:

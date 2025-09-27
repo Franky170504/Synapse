@@ -1,19 +1,24 @@
-from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader, UnstructuredHTMLLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_google_genai.embeddings import GoogleGenerativeAIEmbeddings
-from langchain_chroma import Chroma
-from typing import List
-from langchain_core.documents import Document
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
+from typing import List
+
+from langchain_chroma import Chroma
+from langchain_core.documents import Document
+from langchain_google_genai.embeddings import GoogleGenerativeAIEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders import (
+    PyPDFLoader,
+    Docx2txtLoader,
+    UnstructuredHTMLLoader,
+)
 
 load_dotenv()
 
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200, length_function=len)
 embedding_function = GoogleGenerativeAIEmbeddings(model="gemini-embedding-001")
-vectorstore = Chroma.from_documents(
-    embedding=embedding_function,
-    persist_directory="./chroma_db"
+
+vectorstore = Chroma(
+    persist_directory="./chroma_db", embedding_function=embedding_function
 )
 
 def load_and_split_document(file_path: str) -> List[Document]:
