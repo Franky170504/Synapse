@@ -3,16 +3,32 @@ from pydantic_models import QueryInput, QueryResponse, DocumentInfo, DeleteFileR
 from langchain_utils import get_rag_chain
 from db_utils import insert_application_logs, get_chat_history, get_all_documents, insert_document_record, delete_document_record
 from chroma_utils import index_document_to_chroma, delete_doc_from_chroma
+from dotenv import load_dotenv
 import os
 import uuid
 import logging
 import shutil
+
+load_dotenv()
 
 # Set up logging
 logging.basicConfig(filename='app.log', level=logging.INFO)
 
 # Initialize FastAPI app
 app = FastAPI()
+
+@app.get("/config")
+def get_config():
+    return {
+#         os.environ[""] = "true"
+# os.environ["LANGCHAIN_API_KEY"] = "test"
+# os.environ["GOOGLE_API_KEY"] = "test"
+# os.environ["LANGCHAIN_PROJECT"] = "Production RAG App"
+        "LANGCHAIN_API_KEY": os.getenv("LANGCHAIN_API_KEY"),
+        "GOOGLE_API_KEY": os.getenv("GOOGLE_API_KEY"),
+        "langchain_tracing": os.getenv("LANGCHAIN_TRACING_V2"),
+        "project": os.getenv("LANGCHAIN_PROJECT")
+    }
 
 @app.post("/chat", response_model=QueryResponse)
 def chat(query_input: QueryInput):

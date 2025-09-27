@@ -29,7 +29,7 @@ def create_application_logs():
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     session_id VARCHAR(255) NOT NULL,
                     user_query TEXT,
-                    gpt_response TEXT,
+                    response TEXT,
                     model VARCHAR(100),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
@@ -38,14 +38,14 @@ def create_application_logs():
     finally:
         conn.close()
 
-def insert_application_logs(session_id, user_query, gpt_response, model):
+def insert_application_logs(session_id, user_query, response, model):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
             cursor.execute("""
-                INSERT INTO application_logs (session_id, user_query, gpt_response, model)
+                INSERT INTO application_logs (session_id, user_query, response, model)
                 VALUES (%s, %s, %s, %s)
-            """, (session_id, user_query, gpt_response, model))
+            """, (session_id, user_query, response, model))
         conn.commit()
     finally:
         conn.close()
@@ -55,7 +55,7 @@ def get_chat_history(session_id):
     try:
         with conn.cursor() as cursor:
             cursor.execute("""
-                SELECT user_query, gpt_response, model, created_at
+                SELECT user_query, response, model, created_at
                 FROM application_logs
                 WHERE session_id = %s
                 ORDER BY created_at ASC
