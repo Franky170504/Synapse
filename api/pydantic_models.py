@@ -4,7 +4,7 @@ from datetime import datetime
 
 class ModelName(str, Enum):
     GPT4_O = "gpt-4o"
-    GPT4_O_MINI = "gpt-4o-mini"
+    GPT4_O_MINI = "gemini-2.5-flash"
 
 class QueryInput(BaseModel):
     question: str
